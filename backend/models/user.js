@@ -27,7 +27,18 @@ User.updatePictureUrl = (req, res) => {
     )
         .then(() => res.status(201).json({ message: 'Votre photo de profil à été mise à jour avec succès!' }))
         .catch(error => res.status(500).json(error));
+};
 
+User.deleteOne  = (userId, res) => {  
+    User.destroy({ where: { id: userId }})
+    .then(() => 
+        res.clearCookie("userToken")
+           .clearCookie("userId")
+           .clearCookie("isTokenValid")
+           .status(200)
+           .json({ message: 'Votre profil ainsi que toutes les ressources qui lui étaient lié ont été supprimées avec succès' })
+    )
+    .catch(error => res.status(400).json(error));
 };
 
 // Définition des associations entre les tables 

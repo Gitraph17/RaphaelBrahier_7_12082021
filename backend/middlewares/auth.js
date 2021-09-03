@@ -5,19 +5,20 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 module.exports.getUserIdFromToken  = (req) => {
-    const token = req.headers.authorization.split(' ')[1];
+    const token = req.cookies['userToken'];
     const decodedToken = jwt.verify(token, process.env.RANDOM_TOKEN_KEY);
-    const userId = decodedToken.userId;
-    return userId;
+    const tokenUserId = decodedToken.userId;
+    return tokenUserId;
 }
 
 module.exports.authentication= (req, res, next) => {
-  if (!req.headers.authorization) {
-    res.status(401).end("Requête non authentifiée: absence de token.");
+  const cookieUserId = req.cookies['userId'];
+  if (!req.headers.cookie) {
+    res.status(401).end("Requête non authentifiée: absence de cookie d'authentification.");
   } else {
-  this.getUserIdFromToken(req, res);
+    IDTOKEN = this.getUserIdFromToken(req, res)
     try {
-      if (req.body.userId && req.body.userId !== userId) {
+      if (cookieUserId != IDTOKEN) {
         throw 'Invalid user ID';
       } else {
         next();
