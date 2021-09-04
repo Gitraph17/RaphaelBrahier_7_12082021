@@ -6,7 +6,7 @@
         <img :src="comment.user.picture_url ? comment.user.picture_url : require('../../assets/avatar.svg')" />
         <span class="author"> {{ comment.user.first_name + ' ' + comment.user.last_name }}</span> 
         <time class="publicationDate"> Le {{ dateFormatter(comment.publication_date) }} </time>
-        <DeleteButton style="height:24px" :iconWidth="'24px'" v-if="comment.user_id === userId || userIsAdmin" @click="deleteComment(comment.id)"/>
+        <DeleteButton style="height:24px" :iconWidth="'24px'" v-if="comment.user_id === this.$store.getters.UserID || this.$store.getters.GETUserIsAdmin" @click="deleteComment(comment.id)"/>
       </header>
       <p>{{ comment.content }}</p> 
     </article>
@@ -21,13 +21,6 @@ export default {
   components:{ DeleteButton },
   mixins: [dateFormatter],
   props: ['postComments'],
-  data () {
-    return {
-      userIsAdmin: this.$store.getters.GETUserIsAdmin,
-      userId: this.$store.getters.UserID,
-    }
-  },
-
   methods: {
     async deleteComment(commentID) {
       try {

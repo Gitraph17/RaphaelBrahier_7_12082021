@@ -5,6 +5,7 @@ const Post = require("../models/post");
 const auth = require("../middlewares/auth");
 const Comment = require("../models/comment");
 const PostLike = require("../models/post_like");
+const { deleteImage } =  require('../utils/images_utils');
 
 
 exports.createPost = (req, res) => {
@@ -54,6 +55,7 @@ exports.deletePost = (req, res) => {
         Post.findOne({ where: { id: req.body.postId }})
         .then(post => {
             if (userIdFromToken === post.user_id || userDeleting.is_admin) {
+                deleteImage(post.image_url)
                 Post.destroy({ where: { id: post.id }})
                     .then(() => res.status(200).json({ message: 'Votre post à été supprimé avec succès.' }))
                     .catch(error => res.status(400).json(error));

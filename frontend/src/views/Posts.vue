@@ -9,7 +9,7 @@
           <img class="authorProfilePic" :src="post.user.picture_url ? post.user.picture_url : require('../assets/avatar.svg')" />
           <span class="authorName"> {{ post.user.first_name + ' ' + post.user.last_name }} </span>
           <time class="publicationDate"> {{ dateFormatter(post.publication_date) }} </time>
-          <DeleteButton v-if="post.user_id === userId || userIsAdmin" :iconWidth="'30px'" @click="deletePost(post.id)" />
+          <DeleteButton v-if="post.user_id === this.$store.getters.UserID || this.$store.getters.GETUserIsAdmin" :iconWidth="'30px'" @click="deletePost(post.id)" />
         </header>
         <hr v-if="!post.image_url" />
         <section>
@@ -60,8 +60,6 @@ export default {
       noFileInForm: true,
       noTextInForm: true,
       postImagePreviewSrc: null,
-      userIsAdmin: this.$store.getters.GETUserIsAdmin,
-      userId: this.$store.getters.UserID,
     }
   },
   methods : {
