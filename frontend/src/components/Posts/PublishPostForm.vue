@@ -56,23 +56,35 @@ export default {
       if(!file && !content) {
         return
       } else if (file) {
-        formData.append('content', content)
-        new Compressor(file, {
-          quality: 0.3,
-          async success(imgBLOB) {
-            formData.append('image', imgBLOB, imgBLOB.name)
-            try {
-              await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
-              await self.$emit('reloadPosts')
-            } catch (error) {
-              self.serverError = 'Erreur: ' + error.response.status + ' ' + error.response.data.error
-              setTimeout(() => {self.serverError = null}, 10000)
-            }
-          },
-          error(err) {
-            console.log(err.message);
+        if (file.type === "image/gif") {
+          formData.append('content', content)
+          formData.append('image', file)
+          try {
+            await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+            await this.$emit('reloadPosts')
+          } catch (error) {
+            this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+            setTimeout(() => {this.serverError = null}, 10000)
           }
-        })
+        } else {
+          formData.append('content', content)
+          new Compressor(file, {
+            quality: 0.3,
+            async success(imgBLOB) {
+              formData.append('image', imgBLOB, imgBLOB.name)
+              try {
+                await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+                await self.$emit('reloadPosts')
+              } catch (error) {
+                self.serverError = 'Erreur: ' + error.response.status + ' ' + error.response.data.error
+                setTimeout(() => {self.serverError = null}, 10000)
+              }
+            },
+            error(err) {
+              console.log(err.message);
+            }
+          })
+        }
       } else if (!file) {
           formData.append('content', content)
           try {

@@ -1,5 +1,5 @@
 <template>
-  <input type="submit" id="submitBtn" :disabled="true"/>
+  <input value="Envoyer" type="submit" id="submitBtn" :disabled="true"/>
 </template>
 
 <style scoped>
