@@ -1,12 +1,16 @@
-const { Sequelize } = require("sequelize");
-require('dotenv').config();
-const User = require("../models/user");
+/* CONTROLEURS DES ROUTES: 
+        -AJOUT DE POST
+        -OBTENTION DE TOUS LES POSTS
+        -SUPPRESSION DE POST
+        -OBTENTION DES IDENTIFIANTS DE POSTS LIKÉS PAR UN UTILISATEUR
+*/
+
 const Post = require("../models/post");
-const auth = require("../middlewares/auth");
+const User = require("../models/user");
 const Comment = require("../models/comment");
 const PostLike = require("../models/post_like");
+const auth = require("../middlewares/auth");
 const { deleteImage } =  require('../utils/images_utils');
-
 
 exports.createPost = (req, res) => {
     const userId = auth.getUserIdFromToken(req, res);
@@ -27,7 +31,6 @@ exports.createPost = (req, res) => {
         .catch(error => res.status(400).json(error));
     }
 }
-
 
 exports.getAllPosts = (req, res) => {
     Post.findAll({
@@ -55,39 +58,12 @@ exports.deletePost = (req, res) => {
         Post.findOne({ where: { id: req.body.postId }})
         .then(post => {
             if (userIdFromToken === post.user_id || userDeleting.is_admin) {
-                deleteImage(post.image_url)
+                if (post.image_url) {
+                    deleteImage(post.image_url)
+                }
                 Post.destroy({ where: { id: post.id }})
                     .then(() => res.status(200).json({ message: 'Votre post à été supprimé avec succès.' }))
                     .catch(error => res.status(400).json(error));
-            }
-        })
-        .catch(error => res.status(400).json(error));
-    })
-    .catch(error => res.status(400).json(error));
-}
-
-
-exports.createComment = (req, res) => {
-    const userId = auth.getUserIdFromToken(req, res);
-    Comment.create({
-        user_id: userId,
-        post_id: req.body.data.postId,
-        content: req.body.data.content
-    })
-    .then(() => res.status(201).json({ message: 'Post publié avec succès !' }))
-    .catch(error => res.status(400).json(error));
-}
-
-exports.deleteComment = (req, res) => {
-    const userIdFromToken = auth.getUserIdFromToken(req, res);
-    User.findOne({ where: { id: userIdFromToken }})
-    .then(userDeleting => {
-        Comment.findOne({ where: { id: req.body.commentId }})
-        .then(comment => {
-            if (userIdFromToken === comment.user_id || userDeleting.is_admin) {
-                Comment.destroy({ where: { id: comment.id }})
-                .then(() => res.status(200).json({ message: 'Votre commentaire à été supprimé avec succès.' }))
-                .catch(error => res.status(400).json(error));
             }
         })
         .catch(error => res.status(400).json(error));
@@ -104,31 +80,3 @@ exports.getPostsLikedByUser = (req, res) => {
     .then(postsLikedByUser => {res.status(200).json(postsLikedByUser)})
     .catch(error => res.status(400).json(error));
 }
-
-exports.addLike = (req, res) => {
-    const userId = auth.getUserIdFromToken(req, res);
-    PostLike.create({
-        user_id: userId,
-        post_id: req.body.data.postId,
-        is_like: true
-    })
-    .then(() => res.status(201).json({ message: 'Post liké avec succès !' }))
-    .catch(error => res.status(400).json(error));
-}
-
-exports.deleteLike = (req, res) => {
-    const userIdFromToken = auth.getUserIdFromToken(req, res);
-    PostLike.findOne({ where: { id: req.body.likeId }})
-        .then(like => {
-            if (userIdFromToken === like.user_id) {
-                PostLike.destroy({ where: { id: like.id }})
-                    .then(() => res.status(200).json({ message: 'Votre Like à été supprimé avec succès.' }))
-                    .catch(error => res.status(400).json(error));
-            }
-        })
-        .catch(error => res.status(400).json(error));
-}
-
-
-    
-

@@ -1,38 +1,34 @@
 <template>
   <div>
-    <section v-if="!showUpdateIsSuccess">
-      <CommonHeaderForProfileModifications :Title="'Modifier mon mot de passe'" :close=close />
+    <section>
+      <CommonHeaderForProfileComponents :Title="'Modifier mon mot de passe'" :close=close></CommonHeaderForProfileComponents>
       <form  @submit.prevent="updatePassword()" >
-        <DefaultFormInput name="ActualPassword"  placeholder="Votre mot de passe actuel" @change="[e => actualPassword = e.target.value, showInvalidMessages]" @input="onInput" />
+        <DefaultFormInput name="ActualPassword"  placeholder="Votre mot de passe actuel" @change="[e => actualPassword = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
         <p class="invalidInputInformation" v-if="showInvalidActualPassword">
           Format de mot de passe invalide. Il se compose de 8 charactères minimum et inclue un chiffre, une majuscule ainsi qu'un symbole spécial.
         </p>
 
-        <DefaultFormInput name="NewPassword" placeholder="Votre nouveau mot de passe" @change="[e => newPassword = e.target.value, showInvalidMessages]" @input="onInput" />
+        <DefaultFormInput name="NewPassword" placeholder="Votre nouveau mot de passe" @change="[e => newPassword = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
         <p class="invalidInputInformation" v-if="showInvalidNewPassword">
           Par sécurité le mot de passe doit être composé de 8 charactères minimum. Il doit inclure un chiffre, une majuscule ainsi qu'un symbole spécial.
         </p>
-        <SubmitButton />
-        <div v-if="showUpdateIsSuccess"> </div>
+        <SubmitButton></SubmitButton>
       </form>
     </section>
-    <div class="updateIsSuccess" v-if="showUpdateIsSuccess">Mot de passe mis à jour avec succès !</div>
-    <div class="serverError" v-if="serverError != null">{{ serverError }}</div>
-    <div v-if="showLoader" class="loader">Loading...</div>
+    <p class="serverError" v-if="serverError != null">{{ serverError }}</p>
   </div>
 </template>
 
 <script>
 import SubmitButton from "../UI/SubmitButton.vue"
-import CommonHeaderForProfileModifications from "./CommonHeader.vue"
+import CommonHeaderForProfileComponents from "../UI/CommonHeaderForProfileComponents.vue"
 import DefaultFormInput from "../UI/DefaultFormInput.vue"
 import axios from 'axios';
-import '../../../public/loader.css';
 import { formControlMixins } from "../../mixins/formControl"
 export default {
   components: { 
     SubmitButton,
-    CommonHeaderForProfileModifications,
+    CommonHeaderForProfileComponents,
     DefaultFormInput
   },
   mixins: [formControlMixins],
@@ -40,11 +36,9 @@ export default {
     return {
       actualPassword: null,
       newPassword: null,
-      showUpdateIsSuccess: false,
-      showLoader: false,
       serverError: null,
       showInvalidActualPassword: false,
-      showInvalidNewPassword: false
+      showInvalidNewPassword: false,
     }
   },
   methods: {
@@ -54,26 +48,14 @@ export default {
 
     async updatePassword() {
       try {
-        let response = await axios.put('user/profile/password', { 
+          await axios.put('user/profile/password', { 
           actualPassword: this.actualPassword,
           newPassword: this.newPassword
-        })
-        if (response.status === 200) {
-          this.showUpdateIsSuccess = true
-          this.showLoader = true
-          setTimeout(() => {
-            this.showUpdateIsSuccess = false
-            this.showLoader = false
-            this.close()
-        }, 2000)
-        }
+        }, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}})
+        this.close()
       } catch (error) {
-        if (error.response.status != 200) {
-          this.serverError = error.response.data.error
-          setTimeout(() => {
-          this.serverError = null
-          }, 4000)
-        }
+          this.serverError ='Erreur ' + error.response.status + ': ' + error.response.data.error
+          setTimeout(() => {this.serverError = null}, 10000)
       }
     }
   },

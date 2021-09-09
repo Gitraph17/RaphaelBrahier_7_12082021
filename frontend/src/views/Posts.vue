@@ -1,36 +1,41 @@
 <template>
   <main>
-    <h2>Bienvenue {{ this.$store.getters.GETUserFirstName }},</h2>
-    <PublishPostForm @reloadPosts="loadPosts" />
-    <h1>TOUTES LES PUBLICATIONS</h1>
+    <h2>Bienvenue {{ this.$store.getters.getUserFirstName }},</h2>
+    <p v-if="serverError" class="serverError"> {{ serverError }} </p>
+    
+    <PublishPostForm @reloadPosts="loadPosts"></PublishPostForm>
+    <h1 v-if="postsList.length === 0">Aucune publication actuellement...</h1>
+    <h1 v-else>TOUTES LES PUBLICATIONS</h1>
     <section class="allPosts">
       <article class="singlePost" v-for="post in postsList" :key="post.id">
         <header>
-          <img class="authorProfilePic" :src="post.user.picture_url ? post.user.picture_url : require('../assets/avatar.svg')" />
+          <img class="authorProfilePic" alt="Photo de profil de l'auteur du post"  :src="post.user.picture_url ? post.user.picture_url : require('../assets/avatar.svg')" />
           <span class="authorName"> {{ post.user.first_name + ' ' + post.user.last_name }} </span>
-          <time class="publicationDate"> {{ dateFormatter(post.publication_date) }} </time>
-          <DeleteButton v-if="post.user_id === this.$store.getters.UserID || this.$store.getters.GETUserIsAdmin" :iconWidth="'30px'" @click="deletePost(post.id)" />
+          <time class="publicationDate" :datetime=post.publication_date> {{ dateFormatter(post.publication_date) }} </time>
+          <DeleteButton v-if="post.user_id === this.$store.getters.getUserId || this.$store.getters.isUserAdmin" :iconWidth="'30px'" :iconHeight="'30px'" @click="deletePost(post.id)"></DeleteButton>
         </header>
         <hr v-if="!post.image_url" />
         <section>
-          <img class="postImage" v-if="post.image_url" :src='post.image_url'/>
+          <img alt="Image du post" class="postImage" rel="preload" as="image" v-if="post.image_url" :src='post.image_url'/>
           <p class="postContent" v-if="post.content">{{ post.content }}</p> 
         </section>
-        <CountersAndLikeButton
+        <CountersAndLikeButtonSection
           :numberOfLikes=post.post_likes.length 
           :numberOfComments=post.comments.length
           :postLikes=post.post_likes
           :postID=post.id
           @reloadPosts=loadPosts
-        />
-        <CommentForm 
+        ></CountersAndLikeButtonSection>
+
+        <PublishCommentForm 
           :postID=post.id 
           @reloadPosts=loadPosts 
-        />
-        <Comments 
+        ></PublishCommentForm>
+
+        <DisplayCommentsSection 
           :postComments=post.comments 
           @reloadPosts=loadPosts 
-        />
+        ></DisplayCommentsSection>
       </article>
     </section>
   </main>
@@ -38,10 +43,10 @@
 
 <script>
 import DeleteButton from "../components/UI/DeleteButton.vue";
-import PublishPostForm from '../components/PublishPostForm.vue';
-import CountersAndLikeButton from '../components/Posts/CountersAndLikeButton.vue';
-import CommentForm from '../components/Posts/CommentForm.vue';
-import Comments from '../components/Posts/Comments.vue';
+import PublishPostForm from '../components/posts/PublishPostForm.vue';
+import CountersAndLikeButtonSection from '../components/posts/CountersAndLikeButtonSection.vue';
+import PublishCommentForm from '../components/posts/PublishCommentForm.vue';
+import DisplayCommentsSection from '../components/posts/DisplayCommentsSection.vue';
 import dateFormatter  from "../mixins/dateFormatter.js"
 import { mapActions } from "vuex";
 import axios from 'axios';
@@ -49,9 +54,9 @@ export default {
   components: {
     PublishPostForm,
     DeleteButton,
-    CountersAndLikeButton,
-    CommentForm,
-    Comments
+    CountersAndLikeButtonSection,
+    PublishCommentForm,
+    DisplayCommentsSection
   },
   mixins: [dateFormatter],
   data() {
@@ -60,34 +65,42 @@ export default {
       noFileInForm: true,
       noTextInForm: true,
       postImagePreviewSrc: null,
+      serverError: null
     }
   },
   methods : {
-    ...mapActions(["isUserAuthentified", "getUserDatas"]),
+    ...mapActions(["setUserDatasIfTokenValid"]),
 
     async loadPosts() {
       try {
         this.postsList = (await axios.get('post')).data
       } catch (error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     },
 
     async deletePost(postID) {
       try {
         await axios.delete('post', {
+          headers: {'CSRF-Token': localStorage.getItem('csrfToken')},
           data: { postId: postID }
         })
         this.loadPosts()
       } catch(error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     }
   },
-  async created() { 
-    this.isUserAuthentified(),
-    this.getUserDatas(),
-    this.loadPosts()
+  async created() {
+    try {
+      await this.setUserDatasIfTokenValid()
+    } catch (error) {
+      this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+      setTimeout(() => {this.serverError = null}, 10000)
+    }
+    await this.loadPosts()
   },
 }
 </script>
@@ -98,6 +111,11 @@ export default {
     min-width: 580px;
     max-width: 700px;
     margin: auto;
+  }
+
+  .serverError {
+    color: red;
+    font-size: 1.1em;
   }
 
   .singlePost {
@@ -208,11 +226,5 @@ export default {
     .postImage {
       height: 300px;
     }
-
-
   }
-  
-
-
-
 </style>

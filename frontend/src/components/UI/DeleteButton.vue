@@ -1,14 +1,15 @@
 <template>
-  <button><img :style="cssVariables" src="../../../public/delete-icon.svg" /></button>
+  <button title="Supprimer"><img :style="cssVariables" src="../../../public/icons_and_logos/delete_icon.svg" alt="" /></button>
 </template>
 
 <script>
 export default {
-  props: ['iconWidth'],
+  props: ['iconWidth', 'iconHeight'],
   computed: {
     cssVariables () {
       return {
         '--width': this.iconWidth,
+        '--height': this.iconHeight,
       }
     }
   }
@@ -27,6 +28,7 @@ export default {
 
   button > img {
     width: var(--width);
+    height: var(--height);
   }
 
 </style>

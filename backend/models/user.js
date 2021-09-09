@@ -1,4 +1,8 @@
-const { Sequelize, DataTypes } = require("sequelize");
+// MODELE SEQUELIZE UTILISATEUR
+// CONTIENT 2 METHODES: METTRE A JOUR LA PHOTO DE PROFIL ET SUPPRIMER UN UTILISATEUR
+// CONTIENT LES RELATIONS ENTRE LES TABLES 
+
+const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 const Post = require("./post");
 const Comment = require("./comment");
@@ -32,10 +36,7 @@ User.updatePictureUrl = (req, res) => {
 User.deleteOne  = (userId, res) => {  
     User.destroy({ where: { id: userId }})
     .then(() => 
-        res.clearCookie("userToken")
-           .clearCookie("userId")
-           .clearCookie("isTokenValid")
-           .status(200)
+        res.status(200)
            .json({ message: 'Votre profil ainsi que toutes les ressources qui lui étaient lié ont été supprimées avec succès' })
     )
     .catch(error => res.status(400).json(error));

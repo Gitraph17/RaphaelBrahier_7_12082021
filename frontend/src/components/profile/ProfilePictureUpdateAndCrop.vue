@@ -1,6 +1,10 @@
+<!-- UPLOAD ET RECADRAGE DE LA PHOTO DE PROFIL AVEC LE MODULE CROPPERJS -->
+
 <template>
+
   <div class ="cropperView">
-    <CommonHeaderForProfileModifications :Title="'Sélection et recadrage de votre photo'" :close=close />
+    <CommonHeaderForProfileComponents :Title="'Sélection et recadrage de votre photo'" :close=close></CommonHeaderForProfileComponents>
+    <p v-if="serverError" class="serverError"> {{ serverError }} </p>
     <input
       ref="input"
       type="file"
@@ -13,30 +17,31 @@
       <section  class="cropper-area">
         <div class="img-cropper" id="imageBlock" >
           <p>Source</p>
-          <vue-cropper ref="cropper" :aspect-ratio="50/ 50" :src= "imgSrc" preview=".preview" />
-          <DefaultButton purpose="Séléctionner une photo" @click.prevent="showFileChooser" />
+          <vue-cropper ref="cropper" :aspect-ratio="50/ 50" :src= "imgSrc" preview=".preview"></vue-cropper>
+          <DefaultButton purpose="Séléctionner une photo" @click.prevent="showFileChooser"></DefaultButton>
         </div>
       </section>
       <section class="preview-area">
         <p>Preview</p>
         <div class="preview"></div>
-        <DefaultButton purpose="Valider" @click="submitNewPicture" />
+        <DefaultButton purpose="Valider" @click="submitNewPicture"></DefaultButton>
       </section>
     </div>
   </div>
 </template>
 
 <script>
-import CommonHeaderForProfileModifications from "./CommonHeader.vue"
+import CommonHeaderForProfileComponents from "../UI/CommonHeaderForProfileComponents.vue"
 import DefaultButton from "../UI/DefaultButton.vue"
 import VueCropper from 'vue-cropperjs';
 import 'cropperjs/dist/cropper.css';
 import axios from 'axios';
+import Compressor from 'compressorjs';
 export default {
   name: 'Cropper',
   components: {
     VueCropper,
-    CommonHeaderForProfileModifications,
+    CommonHeaderForProfileComponents,
     DefaultButton
   },
   data() {
@@ -45,6 +50,7 @@ export default {
       cropImg: '',
       imgName: '',
       data: null,
+      serverError: null
     };
   },
   methods: {
@@ -96,15 +102,31 @@ export default {
       return new File([u8arr], filename, { type: mime })
     },
 
-    async submitNewPicture() {
+    submitNewPicture() {
       try {
         if (this.imgName != '') {
           this.cropImage()
-          let myFile = this.dataURLtoFile(this.cropImg, this.imgName)
-          let formData = new FormData()
-          formData.append('image', myFile, myFile.name),
-          await axios.post('/user/profile/picture', formData);
-          await this.$emit('finishPictureUpdate')
+          const myFile = this.dataURLtoFile(this.cropImg, this.imgName)
+          const formData = new FormData()
+          const self = this
+          new Compressor(myFile, {
+            maxWidth: 300,
+            maxHeight: 300,
+            quality: 0.3,
+            async success(imgBLOB) {
+              formData.append('image', imgBLOB, imgBLOB.name)
+              try {
+                await axios.post('/user/profile/picture', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+                await self.$emit('finishPictureUpdate')
+              } catch (error) {
+                self.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+                setTimeout(() => {self.serverError = null}, 10000)
+              }
+            },
+            error(err) {
+              console.log(err.message);
+            }
+          })
         } else {
           alert("Veuillez séléctionner une photo.")
         }
@@ -121,6 +143,10 @@ export default {
 </script>
 
 <style scoped>
+.serverError {
+  color: red;
+  font-size: 1.1em;
+}
 
 .cropperView {
   display: flex;

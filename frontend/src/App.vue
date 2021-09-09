@@ -1,17 +1,17 @@
 <template>
   <div>
     <header class="appHeader">
-      <img src="../public/logo.svg" />
+      <img alt="Logo de Groupomania" src="../public/icons_and_logos/logo_groupomania.svg" />
 
       <nav>
-        <router-link v-if="this.$store.getters.UserIsLogin" to="Posts"><span>Accueil</span></router-link>
-        <span v-if="this.$store.getters.UserIsLogin" class="navBreak"> │ </span>
-        <router-link v-if="this.$store.getters.UserIsLogin" to="Profile"><span>Mon Profil</span></router-link>
-        <span v-if="this.$store.getters.UserIsLogin" class="navBreak"> │ </span>
-        <router-link v-if="this.$store.getters.UserIsLogin" to="Login" @click="logout"><img title="Déconnexion" class="logout" src="../public/on-off-button.svg" />  </router-link>
-        <router-link v-if="!this.$store.getters.UserIsLogin" to="/"><span>Inscription</span></router-link>
-        <span class="navBreak" v-if="!this.$store.getters.UserIsLogin"> │ </span>
-        <router-link v-if="!this.$store.getters.UserIsLogin" to="Login"><span>Connexion</span> </router-link>
+        <router-link v-if="this.$store.getters.isUserLoggedIn" to="Posts"><span>Accueil</span></router-link>
+        <span v-if="this.$store.getters.isUserLoggedIn" class="navBreak"> │ </span>
+        <router-link v-if="this.$store.getters.isUserLoggedIn" to="Profile"><span>Mon Profil</span></router-link>
+        <span v-if="this.$store.getters.isUserLoggedIn" class="navBreak"> │ </span>
+        <router-link v-if="this.$store.getters.isUserLoggedIn" to="Login" @click="logOut"><img title="Déconnexion" class="logout" src="../public/icons_and_logos/logout_icon.svg" />  </router-link>
+        <router-link v-if="!this.$store.getters.isUserLoggedIn" to="/"><span>Inscription</span></router-link>
+        <span class="navBreak" v-if="!this.$store.getters.isUserLoggedIn"> │ </span>
+        <router-link v-if="!this.$store.getters.isUserLoggedIn" to="Login"><span>Connexion</span> </router-link>
       </nav>  
     </header>
     <router-view id="routerViews"></router-view>
@@ -23,10 +23,10 @@
 import { mapActions } from "vuex";
 export default {
   methods: {
-  ...mapActions(["LogOut"]),
-    async logout() {
+  ...mapActions(["logOffUser"]),
+    async logOut() {
       try {
-        await this.LogOut()
+        await this.logOffUser()
         this.$router.push("Login") 
       } catch (error) {
         console.log(error)

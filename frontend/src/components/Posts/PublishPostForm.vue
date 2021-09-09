@@ -1,29 +1,32 @@
+
 <template>
     <form>
-      <img class="imgPreview" v-bind:style= "[!imagePreviewSrc ? {'height':'auto'} : {'height':'400px'}]" :src="imagePreviewSrc"/>
+      <img v-if="imagePreviewSrc"  id="imgPreview" :src="imagePreviewSrc" />
       <div class="container">
-        <img class="profilePicture" :src="userProfilePic ? userProfilePic : require('../assets/avatar.svg')" />
+        <img alt="Votre photo de profil"  class="profilePicture" :src="this.$store.getters.getUserPictureUrl ? this.$store.getters.getUserPictureUrl : require('../../assets/avatar.svg')" />
         <textarea  wrap="hard" placeholder="Que souhaitez vous publier ?" minlength="6" @input="onTextInput"></textarea>
       </div>
       <div class="container2">
         <label for="imageInput"> Choisir une image </label>
-        <input type="file" id="imageInput" @change="onFileChange">
-        <SubmitButton :disabled="noFileInForm && noTextInForm" @click.prevent="publishPost()" />
+        <input type="file" id="imageInput" accept="image/*" @change="onFileChange">
+        <SubmitButton :disabled="noFileInForm && noTextInForm" @click.prevent="publishPost()"></SubmitButton>
       </div>
+      <p v-if="serverError" class="serverError"> {{ serverError }} </p>
     </form>
 </template>
 
 <script>
-import SubmitButton from "./UI/SubmitButton.vue"
+import SubmitButton from "../UI/SubmitButton.vue"
 import axios from 'axios';
+import Compressor from 'compressorjs';
 export default {
   components: { SubmitButton },
   data() {
     return {
-      noFileInForm: true,
       noTextInForm: true,
       imagePreviewSrc: null,
-      userProfilePic: this.$store.getters.GETUserPicture
+      noFileInForm: true,
+      serverError: null,
     }
   },
 
@@ -46,25 +49,49 @@ export default {
     },
 
     async publishPost() {
-      try {
-        let formData = new FormData()
-        formData.append('image', document.getElementById('imageInput').files[0]),
-        formData.append('content', document.getElementsByTagName('textarea')[0].value)
-        await axios.post('post', formData);
-        this.imagePreviewSrc = null
-        this.noFileInForm = true
-        this.noTextInForm = true
-        document.getElementById('imageInput').value = null
-        document.getElementsByTagName('textarea')[0].value = null
-        this.$emit('reloadPosts')
-      } catch (error) {
-        console.log(error)
-      }
-    }, 
+      const file = document.getElementById('imageInput').files[0]; 
+      const content = document.getElementsByTagName('textarea')[0].value
+      const formData = new FormData()
+      const self = this
+      if(!file && !content) {
+        return
+      } else if (file) {
+        formData.append('content', content)
+        new Compressor(file, {
+          quality: 0.3,
+          async success(imgBLOB) {
+            formData.append('image', imgBLOB, imgBLOB.name)
+            try {
+              await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+              await self.$emit('reloadPosts')
+            } catch (error) {
+              self.serverError = 'Erreur: ' + error.response.status + ' ' + error.response.data.error
+              setTimeout(() => {self.serverError = null}, 10000)
+            }
+          },
+          error(err) {
+            console.log(err.message);
+          }
+        })
+      } else if (!file) {
+          formData.append('content', content)
+          try {
+            await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+            await this.$emit('reloadPosts')
+          } catch (error) {
+            this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+            setTimeout(() => {this.serverError = null}, 10000)
+          }
+        }
+      this.imagePreviewSrc = null
+      this.noFileInForm = true
+      this.noTextInForm = true
+      document.getElementById('imageInput').value = null
+      document.getElementsByTagName('textarea')[0].value = null
+    },
   }
 }
 </script>
-
 
 <style scoped>
   form {
@@ -80,9 +107,10 @@ export default {
     font-family: Avenir, Helvetica, Arial, sans-serif;
   }
 
-  .imgPreview {
+  #imgPreview {
     display:block;
     width: 100%;
+    height: 400px;
     margin:auto;
     object-fit: cover;
   }
@@ -134,6 +162,11 @@ export default {
 
   #imageInput {
     display:none;
+  }
+
+  .serverError {
+    color: red;
+    font-size: 1.1em;
   }
 
   @media screen and (max-width: 768px) {

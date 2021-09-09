@@ -1,16 +1,16 @@
 <template>
   <div>
-    <section v-if="!showDeleteAccountSuccess">
-      <CommonHeaderForProfileModifications :Title="'SUPPRIMER VOTRE COMPTE'" :close=close />
+    <section>
+      <CommonHeaderForProfileComponents :Title="'SUPPRIMER VOTRE COMPTE'" :close=close></CommonHeaderForProfileComponents>
       <p>ATTENTION cette action est irréversible. <br/> Elle entraine la suppresion de l'intégralité de vos données.</p>
       <br/>
       <p class="confirmPassword">Pour confirmer veuillez saisir votre mot de passe.</p>
       <form  @submit.prevent="deleteAccount()" >
-        <DefaultFormInput name="Password" @change="[e => password = e.target.value, showInvalidMessages]" @input="onInput" />
+        <DefaultFormInput name="Password" @change="[e => password = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
         <p class="invalidInputInformation" v-if="showInvalidPassword"> 
           Format de mot de passe invalide. Il se compose de 8 charactères minimum et inclue un chiffre, une majuscule ainsi qu'un symbole spécial.
         </p>
-        <SubmitButton value="SUPPRIMER" />
+        <SubmitButton value="SUPPRIMER"></SubmitButton>
       </form>
     </section>
     <div class="error" v-if="serverError != null">{{ serverError }}</div>
@@ -19,7 +19,7 @@
 
 <script>
 import SubmitButton from "../UI/SubmitButton.vue"
-import CommonHeaderForProfileModifications from "./CommonHeader.vue"
+import CommonHeaderForProfileComponents from "../UI/CommonHeaderForProfileComponents.vue"
 import DefaultFormInput from "../UI/DefaultFormInput.vue"
 import axios from 'axios';
 import { mapActions } from "vuex";
@@ -27,7 +27,7 @@ import { formControlMixins } from "../../mixins/formControl"
 export default {
   components:{ 
     SubmitButton,
-    CommonHeaderForProfileModifications,
+    CommonHeaderForProfileComponents,
     DefaultFormInput
   },
   mixins: [formControlMixins],
@@ -39,23 +39,22 @@ export default {
     }
   },
   methods: {
-     ...mapActions(["DeleteAccount", "isUserAuthentified"]),
+     ...mapActions(["logOffUser"]),
     close() {
       this.$emit('closeDeleteAccountConfirmation')
     },
 
     async deleteAccount() {
       try {
-        await this.DeleteAccount()
-        await axios.delete("/user/profile", {data: { password: this.password }})
+        await axios.delete("/user/profile", {
+          headers: {'CSRF-Token': localStorage.getItem('csrfToken')},
+          data: { password: this.password } 
+        })
+        await this.logOffUser()
         this.$router.push({ name: 'Subscribe' })
-        } catch (error) {
-        if (error.response.status != 200) {
-          this.serverError = error.response.data.error
-          setTimeout(() => {
-          this.serverError = null
-          }, 4000)
-        }
+      } catch (error) {
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     }
   }

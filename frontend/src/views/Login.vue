@@ -2,15 +2,15 @@
   <div>
     <h1>Groupomania - Votre réseau social d'entreprise.</h1>
     <form  @submit.prevent="onSubmit">
-      <DefaultFormInput name="Email" @change="[e => loginForm.email = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="Email" @change="[e => loginForm.email = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidEmail">
         Format d'adresse email invalide.
       </p>
-      <DefaultFormInput name="Password" @change="[e => loginForm.password = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="Password" @change="[e => loginForm.password = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidPassword">
         Format de mot de passe invalide. Il se compose de 8 charactères minimum et inclue un chiffre, une majuscule ainsi qu'un symbole spécial.
       </p>
-      <SubmitButton value="Se connecter" style="margin:auto"/>
+      <SubmitButton value="Se connecter" style="margin:auto"></SubmitButton>
       <p class="serverError" v-if="serverError != null">Erreur: {{ serverError }} </p>
     </form>
     <p>Nouveau sur la plateforme ? <router-link to="/">Inscrivez-vous</router-link></p>
@@ -40,21 +40,18 @@ export default {
     };
   },
   methods : {
-    ...mapActions(["LogIn", "isUserAuthentified"]),
+    ...mapActions(["logUserIn"]),
     async onSubmit() {
       try {
-        await this.LogIn(this.loginForm)
+        await this.logUserIn(this.loginForm)
         this.$router.push("Posts")  
         this.serverError = null
       } catch (error) {
-        this.serverError = error.response.status + ' ' + error.response.data.error
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     }
   },
-
-  created() {
-    this.isUserAuthentified()
-  }
 };
 </script>
 

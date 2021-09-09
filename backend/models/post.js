@@ -1,8 +1,7 @@
-const { Sequelize, DataTypes } = require("sequelize");
+// MODELE SEQUELIZE DE POST
+
+const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const User = require("./user");
-const Comment = require("./comment");
-const PostLike = require("./post_like");
 
 const Post = sequelize.define('post', {
     id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, autoIncrement: true, primaryKey:true },

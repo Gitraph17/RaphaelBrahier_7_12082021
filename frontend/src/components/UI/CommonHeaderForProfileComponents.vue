@@ -1,7 +1,7 @@
 <template>
   <header>
     <h2>{{ Title }}</h2>
-    <button @click.prevent="close"><img src="../../../public/close.png" /></button>
+    <button @click.prevent="close"><img src="../../../public/icons_and_logos/close_icon.png" /></button>
   </header>
 </template>
 
@@ -31,7 +31,6 @@ export default {
     padding: 0 !important;
     border: none;
     border-radius: 50%;
-    background-color: none;
     cursor: pointer;
     padding:2px 8px;
   }

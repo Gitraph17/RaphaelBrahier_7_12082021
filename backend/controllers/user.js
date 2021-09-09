@@ -1,3 +1,14 @@
+/* CONTROLEURS DES ROUTES: 
+        -CREATION D'UN NOUVEL UTILISATEUR
+        -LOGIN DE L'UTILISATEUR
+        -OBTENTION DU PROFIL UTILISATEUR
+        -MISE A JOUR DES INFORMATIONS PERSONELLES UTILISATEUR
+        -MISE A JOUR DU MOT DE PASSE UTILISATEUR
+        -MISE A JOUR DE LA PHOTO DE PROFIL UTILISATEUR
+        -LOGOUT DE L'UTILISATEUR
+        -SUPPRESSION DE L'UTILISATEUR
+*/
+
 const { Sequelize } = require("sequelize");
 const validator = require('validator');
 const bcrypt = require("bcrypt");
@@ -8,15 +19,6 @@ const auth = require("../middlewares/auth");
 const Post = require("../models/post");
 const { deleteImage } =  require('../utils/images_utils');
 
-// INSCRIPTION: Vérification du format d'email, et du mot de passe qui doit être fort. Cryptage du mot de passe, création d'un nouvel objet User et enregistrement dans la BDD via la méthode "create".
-/* Le corps de la reqûete attendu est un objet JSON au format suivant:
-{
-    "first_name":"Jonh",
-    "last_name":"Doe",
-    "email":"jonh@doe.com",
-    "password":"Azerty123!"
-}
-*/
 exports.signup = (req, res) => {
     if (validator.isEmail(req.body.email) === false) {
       return res.status(400).json({ error: "Format d'email incorrect !" });
@@ -38,9 +40,6 @@ exports.signup = (req, res) => {
         .catch(error => res.status(500).json(error));
     };
 
-
-// https://www.youtube.com/watch?v=UzCkSzmEq8E Implémenter CAPTCHA pour se prémunir des attaques par force brute ??
-// ADMIN authentification
 exports.login = (req, res) => {
     User.findOne({ where: { email: req.body.email }})
         .then(user => {
@@ -81,11 +80,10 @@ exports.getProfile= (req, res) => {
         .catch(error => res.status(500).json({ error }));
 }
 
-
 exports.updateProfileInfos= (req, res) => {
     const userId = auth.getUserIdFromToken(req);
-    if (req.body.data.email && (validator.isEmail(req.body.data.email) === false)) {
-        return res.status(400).json({ message: "Format d'email incorrect !" });
+    if (validator.isEmail(req.body.data.email) === false) {
+        return res.status(400).json({ error: "Format d'email incorrect !" });
     } else {
         User.update({ 
             first_name: req.body.data.firstName,
@@ -101,13 +99,14 @@ exports.updateProfileInfos= (req, res) => {
 
 exports.updatePassword= (req, res) => {
     const userId = auth.getUserIdFromToken(req);
-    console.log(req.body.actualPassword)
     User.findOne({ where: { id: userId }})
     .then(user => {
         bcrypt.compare(req.body.actualPassword, user.password)
         .then(valid => { 
             if (!valid) {
                 return res.status(401).json({ error: "Mot de passe actuel incorrect." });
+            } else if (req.body.actualPassword === req.body.newPassword) {
+                return res.status(400).json({ error: "Le nouveau mot de passe est identique au mot de passe actuel. Veuillez le modifier." });
             } else if (validator.isStrongPassword(req.body.newPassword) === false) {
                 return res.status(400).json({ error: "Format de mot de passe incorrect ! Le mot de passe doit compter au minimum 8 caractères dont au moins 1 majuscule, 1 minuscule, 1 chiffre, et 1 symbole." });
             } else if (valid) {
@@ -134,6 +133,18 @@ exports.updateProfilePicture = (req, res) => {
             User.updatePictureUrl(req, res);
         })
     .catch(error => res.status(500).json(error));
+}
+
+exports.logout = (req, res) => {
+    try {
+        res.clearCookie("isTokenValid");
+        res.clearCookie("userToken");
+        res.clearCookie("userId");
+        res.clearCookie("_csrf");
+        res.status(200).json({ message: 'Utilisateur déconnecté avec succès' })
+    } catch(error) {
+        res.status(400).json(error)
+    }    
 }
 
 exports.deleteUser = (req, res) => {
@@ -166,17 +177,3 @@ exports.deleteUser = (req, res) => {
     })
     .catch(error => res.status(500).json({ error: error }));
 }
-
-exports.logout = (req, res) => {
-    try {
-        res.clearCookie("isTokenValid");
-        res.clearCookie("userToken");
-        res.clearCookie("userId");
-        res.status(200).json({ message: 'Utilisateur déconnecté avec succès' })
-    } catch(error) {
-        res.status(400).json(error)
-    }    
-}
-
-    
-

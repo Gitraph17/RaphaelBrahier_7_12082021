@@ -5,27 +5,24 @@
 <script>
 export default {
   methods: {
-    defineAttributs() {
+    setInputAttributs() {
       let inputs = document.getElementsByTagName("input")
       for (let input of inputs) {
         switch (input.name) {
           case "FirstName":
             input.placeholder = "Prénom"
             input.type = "text"
-            input.pattern = "^[\\w'\\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\\]]{1,}$"
-            input.maxlength = "20"
+            input.pattern = "^[\\w'\\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\\]]{1,20}$"
             break;
           case "LastName":
             input.placeholder = "Nom de famille"
             input.type = "text"
-            input.pattern = "^[\\w'\\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\\]]{1,}$"
-            input.maxlength = "20"
+            input.pattern = "^[\\w'\\-,.][^0-9_!¡?÷?¿/\\+=@#$%ˆ&*(){}|~<>;:[\\]]{1,20}$"
             break;
           case "Email": 
             input.placeholder = "Email"
             input.type = "email"
             input.pattern = "^[\\w\\-.]+@([\\w-]+\\.)+[\\w-]{2,3}$"
-            input.maxlength = "40"
             break;
           case "Password":
           case "ActualPassword":
@@ -35,14 +32,13 @@ export default {
             }
             input.type = "password"
             input.pattern = "^(?=.*[A-Z])(?=.*[!@#$&*?])(?=.*[0-9]).{8,}$"
-            input.maxlength = "40"
             break;
         }
       }
     }
   },
   mounted() {
-    this.defineAttributs()
+    this.setInputAttributs()
   }
 }
 </script>

@@ -1,7 +1,8 @@
-const { Sequelize, DataTypes, DATE } = require("sequelize");
+// MODELE SEQUELIZE DE COMMENTAIRE
+
+const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const User = require("./user");
-const Post = require("./post");
+
 
 const Comment = sequelize.define('comment', {
     id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false, autoIncrement: true, primaryKey:true },

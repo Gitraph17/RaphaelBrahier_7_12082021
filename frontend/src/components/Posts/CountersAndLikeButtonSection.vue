@@ -1,21 +1,22 @@
 <template>
   <section>
     <div class="counter likesCounter">
-      <img src="../../../public/circle.svg" />
+      <img src="../../../public/icons_and_logos/likes_counter_icon.svg" alt="Icône du compteut de likes"/>
       <span> {{ numberOfLikes }} </span>
     </div>
     <div class="counter commentsCounter">
-      <img src="../../../public/comment.svg" /> 
+      <img src="../../../public/icons_and_logos/comments_counter_icon.svg" alt="Icône du compteut de commentaires"/> 
       <span> {{ numberOfComments }} </span>
     </div>
     <button v-if="postsLikedByUser.includes(postId)" class="postIsLiked" @click="likePostOrCancelLike(postId, postLikes)">
-      <img src="../../../public/likeBtnIcon-isLiked.svg"/>
+      <img src="../../../public/icons_and_logos/like_button_icon_colored.svg" alt="Icône du bouton like inactivé"/>
       <span> J'aime </span>
     </button>
     <button v-else class="postIsNotLiked" @click="likePostOrCancelLike(postId, postLikes)">
-      <img src="../../../public/likeBtnIcon.svg"/>
+      <img src="../../../public/icons_and_logos/like_button_icon_uncolored.svg" alt="Icône du bouton like activé"/>
       <span> J'aime </span>
     </button>
+    <p v-if="serverError" class="serverError"> {{ serverError }} </p>
   </section>
 </template>
 
@@ -27,7 +28,8 @@ export default {
     return {
       postsLikedByUser: [],
       likeToDelete: null,
-      postId : this.postID
+      postId : this.postID,
+      serverError: null
     }
   },
   methods: {
@@ -38,23 +40,25 @@ export default {
           this.postsLikedByUser.push(likedPost.post_id)
         } 
       } catch (error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     },
 
     async likePost(postID) {
       try {
-        await axios.post('post/like', { data: { postId: postID}})
+        await axios.post('post/like', { data: { postId: postID}}, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}})
         this.postsLikedByUser.push(postID)
         await this.$emit('reloadPosts')
       } catch (error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     },
 
     targetLikeToDelete(postLikes) {
       postLikes.forEach(like => {
-        if (this.$store.getters.UserID === like.user_id) {
+        if (this.$store.getters.getUserId === like.user_id) {
           this.likeToDelete = like.id
         }
       })
@@ -62,7 +66,10 @@ export default {
 
     async deleteLike(postID) {
       try {
-        await axios.delete('post/like', { data: { likeId: this.likeToDelete }})
+        await axios.delete('post/like', {
+          headers: {'CSRF-Token': localStorage.getItem('csrfToken')}, 
+          data: { likeId: this.likeToDelete }
+        })
         this.likeToDelete = null
         await this.$emit('reloadPosts')
         const index = this.postsLikedByUser.indexOf(postID);
@@ -70,7 +77,8 @@ export default {
           this.postsLikedByUser.splice(index, 1);
         }
       } catch (error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     },
 
@@ -104,6 +112,7 @@ export default {
 
   .counter > img {
     width: 30px;
+    height: 30px;
     margin-right:7px;
   }
 
@@ -131,12 +140,13 @@ export default {
 
   button > img {
     height: 22px;
+    width: 22px;
     margin-right: 3px;
   }
 
   .postIsNotLiked {
     background-color: white;
-    color:#A9A9A9;
+    color:#646669;
     border: 2px solid #A9A9A9;
   }
 

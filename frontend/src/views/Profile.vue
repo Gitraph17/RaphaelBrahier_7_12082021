@@ -1,73 +1,82 @@
+<!--ACCES AUX INFORMATIONS DU PROFIL UTILISATEUR ET A LEURS MODIFICATIONS -->
+
 <template>
   <div>
-    <div v-show="!showCropper && !showUpdateUserForm && !loading && !showUpdatePasswordForm && !showDeleteAccountConfirmation"  class ="profile">
-      <h1 class="profile__headline">MON PROFIL</h1>
-      <section class="profilePicture">
+    <main v-show="!showProfilePictureModification && !showUpdateUserInfosForm && !showUpdatePasswordForm && !showDeleteAccountConfirmation">
+      <h1>MON PROFIL</h1>
+      <p v-if="serverError" class="serverError"> {{ serverError }} </p>
+      <section class="profilePictureSection">
         <h3>Ma photo de profil:</h3>
-        <img id="profilePicture__image" :src="this.$store.getters.GETUserPicture ? this.$store.getters.GETUserPicture : require('../assets/avatar.svg')" />
-        <DefaultButton purpose="Modifier ma photo" @click="showCropper = true" />
+        <img :src="this.$store.getters.getUserPictureUrl ? this.$store.getters.getUserPictureUrl : require('../assets/avatar.svg')" />
+        <DefaultButton purpose="Modifier ma photo" @click="showProfilePictureModification = true"></DefaultButton>
       </section>
-      <section class="profileInfos">
+      <section class="profileInfosSection">
         <h3>Mes informations personelles:</h3>
-        <p>Prénom: {{ this.$store.getters.GETUserFirstName }} </p>
-        <p>Nom de famille: {{ this.$store.getters.GETUserLastName }} </p>
-        <p>Email: {{ this.$store.getters.GETUserEmail }} </p>
-        <DefaultButton purpose="Modifier mes informations" @click="showUpdateUserForm = true" />
+        <p>Prénom: {{ this.$store.getters.getUserFirstName }} </p>
+        <p>Nom de famille: {{ this.$store.getters.getUserLastName }} </p>
+        <p>Email: {{ this.$store.getters.getUserEmail }} </p>
+        <DefaultButton purpose="Modifier mes informations" @click="showUpdateUserInfosForm = true"></DefaultButton>
         <hr />
-        <DefaultButton purpose="Modifier mon mot de passe" @click="showUpdatePasswordForm = true" />
+        <DefaultButton purpose="Modifier mon mot de passe" @click="showUpdatePasswordForm = true"></DefaultButton>
       </section>
-    </div>
-    <DefaultButton purpose="Supprimer mon compte" class="deleteAccountBtn" v-show="!showCropper && !showUpdateUserForm && !loading && !showUpdatePasswordForm && !showDeleteAccountConfirmation" @click="showDeleteAccountConfirmation = true" />
-    <div v-show="loading" class="loader">Loading...</div>
-    <Cropper v-if="showCropper" @finishPictureUpdate="finishPictureUpdate" @closeCropper="closeCropper"/>
-    <UpdateUserForm v-if="showUpdateUserForm" @closeUpdateUserForm="closeUpdateUserForm" @finishUpdate="finishUpdate" />
-    <UpdatePasswordForm v-if="showUpdatePasswordForm" @closeUpdatePasswordForm="closeUpdatePasswordForm" />
-    <DeleteAccountConfirmation v-if="showDeleteAccountConfirmation" @closeDeleteAccountConfirmation="closeDeleteAccountConfirmation" />
+    </main>
+    <DefaultButton purpose="Supprimer mon compte" class="deleteAccountBtn" v-show="!showProfilePictureModification && !showUpdateUserInfosForm && !showUpdatePasswordForm && !showDeleteAccountConfirmation" @click="showDeleteAccountConfirmation = true"></DefaultButton>
+    <ProfilePictureUpdateAndCrop v-if="showProfilePictureModification" @finishPictureUpdate="finishPictureUpdate" @closeCropper="closeCropper"></ProfilePictureUpdateAndCrop>
+    <PersonalInformationsUpdateForm v-if="showUpdateUserInfosForm" @closeUpdateUserInfosForm="closeUpdateUserInfosForm" @finishInfosUpdate="finishInfosUpdate"></PersonalInformationsUpdateForm>
+    <PasswordUpdateForm v-if="showUpdatePasswordForm" @closeUpdatePasswordForm="closeUpdatePasswordForm"></PasswordUpdateForm>
+    <DeleteAccountConfirmation v-if="showDeleteAccountConfirmation" @closeDeleteAccountConfirmation="closeDeleteAccountConfirmation"></DeleteAccountConfirmation>
   </div>
 </template>
 
 <script>
-import Cropper from '../components/ProfileModifications/Picture.vue';
-import UpdateUserForm from '../components/ProfileModifications/PersonalInformations.vue';
-import UpdatePasswordForm from '../components/ProfileModifications/Password.vue';
-import DeleteAccountConfirmation from '../components/ProfileModifications/DeleteAccount.vue';
+import ProfilePictureUpdateAndCrop from '../components/profile/ProfilePictureUpdateAndCrop.vue';
+import PersonalInformationsUpdateForm from '../components/profile/PersonalInformationsUpdateForm.vue';
+import PasswordUpdateForm from '../components/profile/PasswordUpdateForm.vue';
+import DeleteAccountConfirmation from '../components/profile/DeleteAccountConfirmation.vue';
 import DefaultButton from '../components/UI/DefaultButton.vue'
-import '../../public/loader.css';
 import { mapActions } from "vuex";
 export default {
   components: {
-    Cropper,
-    UpdateUserForm,
-    UpdatePasswordForm,
+    ProfilePictureUpdateAndCrop,
+    PersonalInformationsUpdateForm,
+    PasswordUpdateForm,
     DeleteAccountConfirmation,
     DefaultButton
   },
   data() {
     return {
-      showCropper: false,
-      loading: false,
-      showUpdateUserForm: false,
+      showProfilePictureModification: false,
+      showUpdateUserInfosForm: false,
       showUpdatePasswordForm: false,
-      showDeleteAccountConfirmation: false
+      showDeleteAccountConfirmation: false,
+      serverError: null
     }
   },
   methods : {
-    ...mapActions(["isUserAuthentified", "getUserDatas", "updateProfilePicture"]),
+    ...mapActions(["setUserDatasIfTokenValid"]),
 
     async finishPictureUpdate() {
-      this.loading = true
-      this.showCropper = false
-      await this.getUserDatas()
-      setTimeout(() => this.loading = false, 800)   
+      this.showProfilePictureModification = false
+      try {
+        await this.setUserDatasIfTokenValid()
+      } catch (error) {
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
+      }
     },
 
-    async finishUpdate() {
-      await this.getUserDatas()
-      this.showUpdateUserForm = false
-    },
+    async finishInfosUpdate() {
+      this.showUpdateUserInfosForm = false
+      try {
+      await this.setUserDatasIfTokenValid()
+      } catch (error) {
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
+      }
+    }, 
 
-    closeUpdateUserForm() {
-      this.showUpdateUserForm = false
+    closeUpdateUserInfosForm() {
+      this.showUpdateUserInfosForm= false
     },
 
     closeUpdatePasswordForm() {
@@ -79,29 +88,33 @@ export default {
     },
 
     closeCropper() {
-      this.showCropper = false
+      this.showProfilePictureModification = false
     }
 
   },
   async created() { 
-    await this.isUserAuthentified()
-    await this.getUserDatas() 
+    try {
+      await this.setUserDatasIfTokenValid()
+    } catch (error) {
+      this.serverError = 'Erreur: ' + error.response.status + ' ' + error.response.data.error
+      setTimeout(() => {this.serverError = null}, 10000)
+    }
   },
 }
 </script>
 
 <style scoped>
-  .profile {
+  main {
     display:flex;
     justify-content: center;
     flex-wrap: wrap;
   }
 
-  .profile__headline {
+  h1 {
     width: 100%;
   }
 
-  .profilePicture {
+  .profilePictureSection {
     margin: 10px;
     display: flex;
     flex-direction: column;
@@ -112,7 +125,7 @@ export default {
     padding: 8px;
   }
 
-  #profilePicture__image {
+  .profilePictureSection > img {
     border: 3.2px solid #9ad5b7;
     width: 250px;
     height: 250px;
@@ -120,7 +133,7 @@ export default {
     object-fit: fill;
   }
 
-  .profileInfos {
+  .profileInfosSection {
     margin: 10px;
     width:256.375px;
     font-size: 1.2em;
@@ -133,5 +146,10 @@ export default {
     font-size: 1.2em;
     border-color: red;
     margin-top: 30px;
+  }
+
+  .serverError {
+    color: red;
+    font-size: 1.1em;
   }
 </style>

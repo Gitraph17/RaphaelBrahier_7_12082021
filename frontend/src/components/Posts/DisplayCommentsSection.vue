@@ -5,11 +5,12 @@
       <header>
         <img :src="comment.user.picture_url ? comment.user.picture_url : require('../../assets/avatar.svg')" />
         <span class="author"> {{ comment.user.first_name + ' ' + comment.user.last_name }}</span> 
-        <time class="publicationDate"> Le {{ dateFormatter(comment.publication_date) }} </time>
-        <DeleteButton style="height:24px" :iconWidth="'24px'" v-if="comment.user_id === this.$store.getters.UserID || this.$store.getters.GETUserIsAdmin" @click="deleteComment(comment.id)"/>
+        <time class="publicationDate" :datetime=comment.publication_date> Le {{ dateFormatter(comment.publication_date) }} </time>
+        <DeleteButton style="height:24px" :iconWidth="'24px'" :iconHeight="'24px'" v-if="comment.user_id === this.$store.getters.getUserId || this.$store.getters.isUserAdmin" @click="deleteComment(comment.id)"></DeleteButton>
       </header>
       <p>{{ comment.content }}</p> 
     </article>
+    <p v-if="serverError" class="serverError"> {{ serverError }} </p>
   </section>
 </template>
 
@@ -21,15 +22,23 @@ export default {
   components:{ DeleteButton },
   mixins: [dateFormatter],
   props: ['postComments'],
+  data() {
+    return {
+      serverError: null,
+    }
+  },
+  
   methods: {
     async deleteComment(commentID) {
       try {
         await axios.delete('post/comment', {
+          headers: {'CSRF-Token': localStorage.getItem('csrfToken')},
           data: { commentId: commentID }
         })
         await this.$emit('reloadPosts')
       } catch(error) {
-        console.log(error)
+        this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+        setTimeout(() => {this.serverError = null}, 10000)
       }
     },
   }

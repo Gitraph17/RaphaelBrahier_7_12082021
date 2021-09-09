@@ -4,27 +4,27 @@
     <p> Pour pouvoir valider votre inscription tous les champs doivent être remplis correctement. </p>
     <form @submit.prevent="onSubmit">
 
-      <DefaultFormInput name="FirstName" @change="[e => userDatas.firstName = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="FirstName" @change="[e => userDatas.firstName = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidFirstName">
         Le prénom doit être composé de 2 à 20 charactères. Chiffres et symboles spéciaux ne sont pas acceptés.
       </p>
 
-      <DefaultFormInput name="LastName" @change="[e => userDatas.lastName = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="LastName" @change="[e => userDatas.lastName = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidLastName">
         Le nom de famille doit être composé de 2 à 20 charactères. Chiffres et symboles spéciaux ne sont pas acceptés.
       </p>
 
-      <DefaultFormInput name="Email"  @change="[e => userDatas.email = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="Email"  @change="[e => userDatas.email = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidEmail">
         Format d'adresse email invalide.
       </p>
 
-      <DefaultFormInput name="Password" @change="[e => userDatas.password = e.target.value, showInvalidMessages]" @input="onInput"/>
+      <DefaultFormInput name="Password" @change="[e => userDatas.password = e.target.value, showInvalidMessages]" @input="onInput"></DefaultFormInput>
       <p class="invalidInputInformation" v-if="showInvalidPassword">
         Par sécurité le mot de passe doit être composé de 8 charactères minimum. Il doit inclure un chiffre, une majuscule ainsi qu'un symbole spécial.
       </p>
 
-      <SubmitButton value="Créer un compte" style="margin:auto"/>
+      <SubmitButton value="Créer un compte" style="margin:auto"></SubmitButton>
       <p class="serverError" v-if="serverError != null"> Erreur: {{ serverError }} </p>
     </form>
     <p> Vous avez déjà un compte ? <router-link to="/Login"> Connectez-vous </router-link></p>
@@ -58,18 +58,19 @@ export default {
     };
   },
   methods : {
-    ...mapActions(["Register"]),
+    ...mapActions(["addNewUser"]),
 
     async onSubmit() {
       try {
-        await this.Register(this.userDatas)
+        await this.addNewUser(this.userDatas)
         this.$router.push({ name: 'Posts' })
         this.serverError = null
       } catch (error) {
         if (error.response.data.name === "SequelizeUniqueConstraintError") {
           this.serverError = "Un compte à déja été créé avec cette adresse email"
         } else {
-          this.serverError = error.response.status + ' ' + error.response.data.error
+          this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+          setTimeout(() => {this.serverError = null}, 10000)
         }
       }
     },
@@ -79,7 +80,7 @@ export default {
 
 <style scoped>
 a {
-  color: #42b983;
+  color: #017a44;
 }
 
 form {
