@@ -18,7 +18,7 @@
         <section>
           <iframe v-if="post.video_url" :src="post.video_url" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           <img alt="Image du post" class="postImage" rel="preload" as="image" v-if="post.image_url" :src='post.image_url'/>
-          <p v-if="post.content" class="postContent"><a v-if="returnLink(post.content)" :href='returnLink(post.content).toString()'>{{ returnLink(post.content).toString() }}</a>{{ returnContentWithoutLink(post.content) }}</p> 
+          <p v-if="post.content" v-html="isLinkInContent(post.content) ? formatContentWithLink(post.content) : post.content" class="postContent"> </p> 
         </section>
         <CountersAndLikeButtonSection
           :numberOfLikes=post.post_likes.length 
@@ -82,17 +82,23 @@ export default {
       }
     },
 
-    returnLink(postContent) {
+    isLinkInContent(postContent) {
       const expression = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
       const urlRegex = new RegExp(expression);
-      return postContent.match(urlRegex);
+      if (postContent.match(urlRegex)) {
+        return true
+      }
     },
 
-    returnContentWithoutLink(postContent) {
+    formatContentWithLink(postContent) {
       const expression = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
       const urlRegex = new RegExp(expression);
-      const link = postContent.match(urlRegex)
-      return postContent.replace(link, '')
+      let link = postContent.match(urlRegex)
+      if (link.toString().startsWith('www')) {
+        return postContent.replace(link, `<a href="http://${link}" target="_blank">${link}</a>`)
+      } else {
+        return postContent.replace(link, `<a href="${link}" target="_blank">${link}</a>`)
+      }
     },
 
     async deletePost(postID) {
@@ -187,6 +193,10 @@ export default {
     background-color: rgba(0, 255, 0, 0.05);
     font-size: 1.3em;
     box-shadow: 0px 1.5px 2px 0px rgba(0, 0, 50, 0.20);
+  }
+
+  .postContent__link {
+    color: blue;
   }
 
   @media screen and (max-width: 768px) {
