@@ -26,6 +26,7 @@ exports.createPost = (req, res) => {
         Post.create({
             user_id: userId,
             content: req.body.content,
+            video_url: req.body.videoUrl,
         })
         .then(() => res.status(201).json({ message: 'Post publié avec succès !' }))
         .catch(error => res.status(400).json(error));

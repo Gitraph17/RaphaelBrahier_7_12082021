@@ -16,8 +16,9 @@
         </header>
         <hr v-if="!post.image_url" />
         <section>
+          <iframe v-if="post.video_url" :src="post.video_url" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           <img alt="Image du post" class="postImage" rel="preload" as="image" v-if="post.image_url" :src='post.image_url'/>
-          <p class="postContent" v-if="post.content">{{ post.content }}</p> 
+          <p v-if="post.content" class="postContent"><a v-if="returnLink(post.content)" :href='returnLink(post.content).toString()'>{{ returnLink(post.content).toString() }}</a>{{ returnContentWithoutLink(post.content) }}</p> 
         </section>
         <CountersAndLikeButtonSection
           :numberOfLikes=post.post_likes.length 
@@ -74,10 +75,24 @@ export default {
     async loadPosts() {
       try {
         this.postsList = (await axios.get('post')).data
+        console.log(this.postsList)
       } catch (error) {
         this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
         setTimeout(() => {this.serverError = null}, 10000)
       }
+    },
+
+    returnLink(postContent) {
+      const expression = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+      const urlRegex = new RegExp(expression);
+      return postContent.match(urlRegex);
+    },
+
+    returnContentWithoutLink(postContent) {
+      const expression = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+      const urlRegex = new RegExp(expression);
+      const link = postContent.match(urlRegex)
+      return postContent.replace(link, '')
     },
 
     async deletePost(postID) {
@@ -155,7 +170,8 @@ export default {
     margin:0;
   }
 
-  .postImage {
+  .postImage,
+  iframe {
     width: 100%;
     height:400px;
     display:block;

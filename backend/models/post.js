@@ -9,6 +9,7 @@ const Post = sequelize.define('post', {
     user_id: { type: DataTypes.MEDIUMINT.UNSIGNED, allowNull: false, }, 
     image_url: { type: DataTypes.STRING, allowNull: true, }, 
     content: { type: DataTypes.TEXT, allowNull: true },
+    video_url: { type: DataTypes.STRING, allowNull: true,},
 }, 
 {
     tableName: 'post', timestamps: false, underscored: true 

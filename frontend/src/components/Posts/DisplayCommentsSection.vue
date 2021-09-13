@@ -66,7 +66,6 @@ export default {
   .singleComment > header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding-right: 7px;
     height: 40px;
   }

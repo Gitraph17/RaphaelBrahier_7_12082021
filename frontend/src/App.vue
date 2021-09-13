@@ -2,7 +2,6 @@
   <div>
     <header class="appHeader">
       <img alt="Logo de Groupomania" src="../public/icons_and_logos/logo_groupomania.svg" />
-
       <nav>
         <router-link v-if="this.$store.getters.isUserLoggedIn" to="Posts"><span>Accueil</span></router-link>
         <span v-if="this.$store.getters.isUserLoggedIn" class="navBreak"> │ </span>

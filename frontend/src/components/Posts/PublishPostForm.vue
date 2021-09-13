@@ -2,12 +2,13 @@
 <template>
     <form>
       <img v-if="imagePreviewSrc"  id="imgPreview" :src="imagePreviewSrc" />
+      <iframe v-if="youtubeLink" width="100%" height="400" :src="youtubeLink" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       <div class="container">
         <img alt="Votre photo de profil"  class="profilePicture" :src="this.$store.getters.getUserPictureUrl ? this.$store.getters.getUserPictureUrl : require('../../assets/avatar.svg')" />
         <textarea  wrap="hard" placeholder="Que souhaitez vous publier ?" minlength="6" @input="onTextInput"></textarea>
       </div>
       <div class="container2">
-        <label for="imageInput"> Choisir une image </label>
+        <label v-if="!youtubeLink" tabindex="0" type="button" for="imageInput"> Choisir une image </label>
         <input type="file" id="imageInput" accept="image/*" @change="onFileChange">
         <SubmitButton :disabled="noFileInForm && noTextInForm" @click.prevent="publishPost()"></SubmitButton>
       </div>
@@ -27,6 +28,7 @@ export default {
       imagePreviewSrc: null,
       noFileInForm: true,
       serverError: null,
+      youtubeLink: null
     }
   },
 
@@ -41,10 +43,19 @@ export default {
     },
 
     onTextInput(e) {
+      this.videoInContent(document.getElementsByTagName('textarea')[0].value)
       if (e.target.value.length < 2) {
         this.noTextInForm = true
       } else {
         this.noTextInForm = false
+      }
+    },
+
+    videoInContent(value) {
+      const youtubeVideoRegEx = new RegExp("(?:https?:\\/\\/)?(?:www\\.)?youtu\\.?be(?:\\.com)?\\/?.*(?:watch|embed)?(?:.*v=|v\\/|\\/)([\\w\\-_]+)\\&?");
+      if (youtubeVideoRegEx.test(value)) {
+        this.youtubeLink = "https://www.youtube.com/embed/"+value.match(youtubeVideoRegEx)[1];
+
       }
     },
 
@@ -55,6 +66,16 @@ export default {
       const self = this
       if(!file && !content) {
         return
+      } else if (this.youtubeLink) {
+        formData.append('videoUrl', this.youtubeLink)
+        formData.append('content', content)
+        try {
+            await axios.post('post', formData, {headers: {'CSRF-Token': localStorage.getItem('csrfToken')}});
+            await this.$emit('reloadPosts')
+          } catch (error) {
+            this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
+            setTimeout(() => {this.serverError = null}, 10000)
+          }
       } else if (file) {
         if (file.type === "image/gif") {
           formData.append('content', content)
@@ -96,6 +117,7 @@ export default {
           }
         }
       this.imagePreviewSrc = null
+      this.youtubeLink = null
       this.noFileInForm = true
       this.noTextInForm = true
       document.getElementById('imageInput').value = null

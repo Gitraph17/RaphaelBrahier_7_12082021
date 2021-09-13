@@ -142,6 +142,12 @@ export default {
     padding: 8px;
   }
 
+  .profileInfosSection > p {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   .deleteAccountBtn {
     font-size: 1.2em;
     border-color: red;

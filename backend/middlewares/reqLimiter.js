@@ -59,7 +59,7 @@ module.exports.updateProfilePicOrInfos = rateLimit({
 //*******************************LIMITEURS DE REQUETES SUR LES ROUTES POST*******************************
 module.exports.createPost = rateLimit({
   windowMs: 60 * 60 * 1000, // 
-  max: 5, 
+  max: 100, 
   handler: function (req, res) {
     return res.status(429).json({
         error: 'Trop de requêtes pour créer des posts ont été enregistrées. Veuillez patienter 60 minutes puis ré-essayer.'

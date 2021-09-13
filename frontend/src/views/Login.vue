@@ -11,7 +11,7 @@
         Format de mot de passe invalide. Il se compose de 8 charactères minimum et inclue un chiffre, une majuscule ainsi qu'un symbole spécial.
       </p>
       <SubmitButton value="Se connecter" style="margin:auto"></SubmitButton>
-      <p class="serverError" v-if="serverError != null">Erreur: {{ serverError }} </p>
+      <p class="serverError" v-if="serverError != null">{{ serverError }} </p>
     </form>
     <p>Nouveau sur la plateforme ? <router-link to="/">Inscrivez-vous</router-link></p>
   </div>
@@ -45,7 +45,6 @@ export default {
       try {
         await this.logUserIn(this.loginForm)
         this.$router.push("Posts")  
-        this.serverError = null
       } catch (error) {
         this.serverError = 'Erreur ' + error.response.status + ': ' + error.response.data.error
         setTimeout(() => {this.serverError = null}, 10000)
