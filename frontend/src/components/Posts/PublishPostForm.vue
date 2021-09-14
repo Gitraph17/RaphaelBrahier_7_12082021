@@ -55,7 +55,6 @@ export default {
       const youtubeVideoRegEx = new RegExp("(?:https?:\\/\\/)?(?:www\\.)?youtu\\.?be(?:\\.com)?\\/?.*(?:watch|embed)?(?:.*v=|v\\/|\\/)([\\w\\-_]+)\\&?");
       if (youtubeVideoRegEx.test(value)) {
         this.youtubeLink = "https://www.youtube.com/embed/"+value.match(youtubeVideoRegEx)[1];
-
       }
     },
 

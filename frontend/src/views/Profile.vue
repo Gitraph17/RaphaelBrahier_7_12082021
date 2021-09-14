@@ -12,12 +12,11 @@
       </section>
       <section class="profileInfosSection">
         <h3>Mes informations personelles:</h3>
-        <p>Prénom: {{ this.$store.getters.getUserFirstName }} </p>
-        <p>Nom de famille: {{ this.$store.getters.getUserLastName }} </p>
-        <p>Email: {{ this.$store.getters.getUserEmail }} </p>
+        <p><span>Prénom:</span> {{ this.$store.getters.getUserFirstName }} </p>
+        <p><span>Nom de famille:</span> {{ this.$store.getters.getUserLastName }} </p>
+        <p><span>Email:</span> {{ this.$store.getters.getUserEmail }} </p>
         <DefaultButton purpose="Modifier mes informations" @click="showUpdateUserInfosForm = true"></DefaultButton>
-        <hr />
-        <DefaultButton purpose="Modifier mon mot de passe" @click="showUpdatePasswordForm = true"></DefaultButton>
+        <DefaultButton class="modifyPasswordBtn" purpose="Modifier mon mot de passe" @click="showUpdatePasswordForm = true"></DefaultButton>
       </section>
     </main>
     <DefaultButton purpose="Supprimer mon compte" class="deleteAccountBtn" v-show="!showProfilePictureModification && !showUpdateUserInfosForm && !showUpdatePasswordForm && !showDeleteAccountConfirmation" @click="showDeleteAccountConfirmation = true"></DefaultButton>
@@ -115,6 +114,8 @@ export default {
   }
 
   .profilePictureSection {
+    width: 30%;
+    min-width: 280px;
     margin: 10px;
     display: flex;
     flex-direction: column;
@@ -134,8 +135,11 @@ export default {
   }
 
   .profileInfosSection {
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+    min-width: 280px;
     margin: 10px;
-    width:256.375px;
     font-size: 1.2em;
     border: 3.2px solid #9ad5b7;
     border-radius: 10px;
@@ -143,9 +147,19 @@ export default {
   }
 
   .profileInfosSection > p {
-    overflow: hidden;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 4px;
+  }
+
+  .profileInfosSection > p > span {
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .profileInfosSection > button {
+    margin: 20px auto;
   }
 
   .deleteAccountBtn {
@@ -157,5 +171,12 @@ export default {
   .serverError {
     color: red;
     font-size: 1.1em;
+  }
+
+  @media screen and (max-width: 700px) {
+    .profilePictureSection,
+    .profileInfosSection {
+      width: 80%;
+    }
   }
 </style>
